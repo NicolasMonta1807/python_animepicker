@@ -1,38 +1,22 @@
-from random import choice
+from random import choice, choices, sample
 from urllib import request
-
 import requests
-
 import json
 
 
-def internalPicker():
-    animes = [
-        ["Naruto", "action", "long"],
-        ["Shingeki no kyojin", "bizarre", "long"],
-        ["Spy X Family", "spies", "short"],
-        ["FullMetal Alchemist", "action", "long"]
-    ]
+def randomPicker(data):
 
-    print("What kind of anime do you wanna watch?: ")
-    mood = input()
+    animeList = []
 
-    foundAnime = False
+    while len(animeList) != 5:
+        randomAnime = choice((data['data']))
+        if (not (randomAnime in animeList)):
+            animeList.append(randomAnime)
 
-    attempts = 0
-
-    while not foundAnime and attempts <= 10:
-        item = choice(animes)
-        if item[1] == mood:
-            print("You really gotta watch ", item[0])
-            foundAnime = True
-        attempts += 1
-
-    if not foundAnime:
-        print("Couldn't find anything for you")
+    return animeList
 
 
-def apiRecommendations(moodID):
+def getAPI(moodID):
 
     apiUrl = "https://api.jikan.moe/v4/anime"
 
@@ -48,21 +32,13 @@ def apiRecommendations(moodID):
         apiUrl,
         params=queryParams)
 
-    data = response.json()
-
     if response.status_code == 200:
-
-        with open('response.txt', 'w') as fileManager:
+        data = response.json()
+        with open('response.json', 'w') as fileManager:
             fileManager.write(json.dumps(response.json(), indent=4))
+        return data
 
-        animeList = response.json()
-
-    print("*************************")
-    print("I guess you should watch: ")
-    print()
-
-    for i in range(len(data['data'])):
-        print(i + 1, data['data'][i]['title'])
+    return response.status_code
 
 
 def moodDefiner(mood):
@@ -109,7 +85,11 @@ def main():
         else:
             break
 
-    apiRecommendations(moodID)
+    animeList = randomPicker(getAPI(moodID))
+
+    print("You should watch: ")
+    for anime in animeList:
+        print("\t-", anime['title'])
 
 
 if __name__ == "__main__":
